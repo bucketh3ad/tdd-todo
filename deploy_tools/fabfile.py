@@ -2,7 +2,7 @@ from fabric.contrib.files import append, exists, sed
 from fabric.api import env, run
 from os import path
 
-REPO_URL = 'https://github.com/bucketh3ad/tddtodo.git'
+REPO_URL = 'https://github.com/bucketh3ad/tdd-todo.git'
 SITES_FOLDER = '/home/ubuntu/sites'
 
 def deploy():
@@ -18,7 +18,7 @@ def _create_directory_structure_if_necessary(site_name):
     base_folder = path.join(SITES_FOLDER, site_name)
     run('mkdir -p %s' % (base_folder))
     for subfolder in ('database', 'static', 'virtualenv', 'source'):
-        run('mkdir -p %s%s' % (base_folder, subfolder))
+        run('mkdir -p %s/%s' % (base_folder, subfolder))
 
 def _get_latest_source(source_folder):
     if exists(path.join(source_folder, '.git')):
@@ -30,12 +30,12 @@ def _get_latest_source(source_folder):
 def _update_settings(source_folder, site_name):
     settings_path = path.join(source_folder, 'superlists/settings.py')
     sed(settings_path, 'DEBUG = True', 'DEBUG = False')
-    sed(settings_path, 'ALLOWED_HOSTS = []', 'ALLOWED_HOSTS = ["%s"]' % (site_name,))
+    append(settings_path, 'ALLOWED_HOSTS = ["%s"]' % (site_name,))
 
 def _update_virtualenv(source_folder):
     virtualenv_folder = path.join(source_folder, '../virtualenv')
-    if not exists(path.join(virtualenv_folder, 'bin', 'pip'))
-        run 'virtualenv --python=python3.3 %s' % (virtualenv_folder,))
+    if not exists(path.join(virtualenv_folder, 'bin', 'pip')):
+        run('virtualenv --python=python3.3 %s' % (virtualenv_folder,))
     run('%s/bin/pip install -r %s/requirements.txt' % (virtualenv_folder, source_folder
     ))
 
@@ -47,4 +47,4 @@ def _update_static_files(source_folder):
 def _update_database(source_folder):
     run('cd %s && ../virtualenv/bin/python3 manage.py syncdb --noinput' % (
         source_folder,
-    )
+    ))
